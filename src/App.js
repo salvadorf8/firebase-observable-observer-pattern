@@ -1,26 +1,39 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { auth, createUserProfileDocument } from './firebase/firebase.utils';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends React.Component {
+    unsubscribeFromAuth = null;
+
+    componentDidMount() {
+        // observer will always trigger a listener to the auth, user will always be sent to page until they sign out
+        // below is an example of - observable/observer pattern - using the firebase library
+        // onAuthStateChanged is known as an observable - which continuously fires off events that occur
+        this.unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
+            // the function code here is our subscription asking the observable to fire when a particular event occurs
+            if (userAuth) {
+                const userRef = await createUserProfileDocument(userAuth);
+
+                userRef.onSnapshot((snapShot) => {
+                    console.log('your user id: ', snapShot.id);
+                    console.log('rest of data: ', snapShot.data());
+
+                    // here you can call an action creator to set the user in the Redux store
+                    // this.props.setCurrentUser({id: snapShot.id, ...snapShot.data()});
+                });
+            } else {
+                // this.props.setCurrentUser(userAuth);
+            }
+        });
+    }
+
+    componentWillUnmount() {
+        // unsubscribing here is basically saying: observable, we no longer need the subscription, lets get rid of it
+        this.unsubscribeFromAuth();
+    }
+
+    render() {
+        return <div>hello</div>;
+    }
 }
 
 export default App;
